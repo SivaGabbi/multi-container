@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t sgabbi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run sgabbi/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t sgabbi/multi-client ./client
+  - docker build -t sgabbi/multi-nginx ./nginx
+  - docker build -t sgabbi/multi-server ./server
+  - docker build -t sgabbi/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push sgabbi/multi-client
+  - docker push sgabbi/multi-nginx
+  - docker push sgabbi/multi-server
+  - docker push sgabbi/multi-worker
